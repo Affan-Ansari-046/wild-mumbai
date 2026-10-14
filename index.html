@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" content="#070c09" />
+    <meta name="description" content="WILD MUMBAI — Premium interactive guide, real topographic map, offline survival manual, and emergency SOS for Sanjay Gandhi National Park, Mumbai, Maharashtra." />
+    <meta name="keywords" content="Sanjay Gandhi National Park, SGNP, Mumbai wildlife, Kanheri Caves, Borivali, leopards Mumbai, Indian wildlife, park trails, trek map" />
+    
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WILD MUMBAI — Beyond the City. Into the Wild." />
+    <meta property="og:description" content="Discover SGNP's 104 sq km rainforest, ancient Kanheri Caves, 40+ free-ranging leopards, interactive real map, trip planner, and offline emergency SOS." />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1456926631375-92c8ce872def?auto=format&fit=crop&w=1200&q=80" />
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Google Fonts: Inter & Cinzel for Cinematic Forest Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <title>WILD MUMBAI — Sanjay Gandhi National Park Interactive Explorer & SOS</title>
+  </head>
+  <body class="bg-[#070c09] text-[#f0f7f3] selection:bg-emerald-500 selection:text-black">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Service worker registration
+      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.info('Service Worker registration skipped or failed:', err);
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
