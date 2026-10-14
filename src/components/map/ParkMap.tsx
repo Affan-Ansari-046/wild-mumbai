@@ -18,8 +18,19 @@ import {
   ExternalLink, 
   Clock, 
   AlertCircle, 
-  X
+  X,
+  Download,
+  CheckCircle2,
+  FileDown,
+  HardDrive,
+  Loader2
 } from 'lucide-react';
+import { 
+  downloadMapTiles, 
+  downloadOfflineMapFile, 
+  getMapTilesCacheStatus 
+} from '../../services/tileDownloadService';
+import { EMERGENCY_CONTACTS_DATA } from '../../data/emergencyContacts';
 
 interface ParkMapProps {
   initialSelectedId?: string | null;
@@ -73,10 +84,42 @@ export const ParkMap: React.FC<ParkMapProps> = ({
   const [savedPlaceIds, setSavedPlaceIds] = useState<string[]>([]);
   const [tileLoadError, setTileLoadError] = useState<boolean>(false);
 
-  // Load saved places IDs
+  // Offline Download State
+  const [isOfflineCached, setIsOfflineCached] = useState<boolean>(false);
+  const [showOfflineModal, setShowOfflineModal] = useState<boolean>(false);
+  const [isDownloadingTiles, setIsDownloadingTiles] = useState<boolean>(false);
+  const [tileDownloadProgress, setTileDownloadProgress] = useState<{ downloaded: number; total: number } | null>(null);
+  const [downloadSuccessMsg, setDownloadSuccessMsg] = useState<string | null>(null);
+
+  // Load saved places IDs & check offline map tile status
   useEffect(() => {
     getSavedPlacesIds().then(setSavedPlaceIds);
+    getMapTilesCacheStatus().then(st => setIsOfflineCached(st.isCached));
   }, []);
+
+  const handleDownloadBrowserTiles = async () => {
+    setIsDownloadingTiles(true);
+    setDownloadSuccessMsg(null);
+    try {
+      const result = await downloadMapTiles((downloaded, total) => {
+        setTileDownloadProgress({ downloaded, total });
+      });
+      setIsOfflineCached(true);
+      setDownloadSuccessMsg(`Cached ${result.tileCount} SGNP map tiles for offline navigation!`);
+      setTimeout(() => setDownloadSuccessMsg(null), 4000);
+    } catch (err: any) {
+      alert('Offline download note: ' + err.message);
+    } finally {
+      setIsDownloadingTiles(false);
+      setTileDownloadProgress(null);
+    }
+  };
+
+  const handleDownloadDeviceFile = () => {
+    const res = downloadOfflineMapFile(ATTRACTIONS_DATA, EMERGENCY_CONTACTS_DATA);
+    setDownloadSuccessMsg(`Downloaded "${res.filename}" (${Math.round(res.sizeBytes / 1024)} KB) to your device!`);
+    setTimeout(() => setDownloadSuccessMsg(null), 4000);
+  };
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -93,8 +136,8 @@ export const ParkMap: React.FC<ParkMapProps> = ({
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // High-performance OpenStreetMap-based CARTO Voyager basemap (unrestricted on Vercel)
-    const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    // High-performance OpenStreetMap-based CARTO Voyager basemap (authenticated with API key)
+    const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=cb1_4k81_1_b0a70455fc908ae029aab1be', {
       subdomains: 'abcd',
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO</a> | SGNP'
@@ -354,11 +397,148 @@ export const ParkMap: React.FC<ParkMapProps> = ({
             onClick={handleLocateUser}
             disabled={isLocating}
             title="Locate my position in SGNP"
-            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-lg transition-all ml-auto"
+            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-lg transition-all"
           >
             <Navigation className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">{isLocating ? 'Locating...' : 'My Location'}</span>
           </button>
+
+          {/* Download Offline Map Trigger Button */}
+          <button
+            onClick={() => setShowOfflineModal(true)}
+            title="Download map for offline use"
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl shadow-lg transition-all active:scale-95 ${
+              isOfflineCached
+                ? 'bg-[#12241b] text-emerald-300 border border-emerald-600 hover:bg-[#183124]'
+                : 'bg-emerald-700 hover:bg-emerald-600 text-white'
+            }`}
+          >
+            {isOfflineCached ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">Offline Map Ready</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Download Map</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Success Notification Banner */}
+      {downloadSuccessMsg && (
+        <div className="absolute top-16 left-3 right-3 z-[999] bg-emerald-950/95 border border-emerald-600 text-emerald-200 text-xs px-4 py-2.5 rounded-xl backdrop-blur-md flex items-center justify-between shadow-xl animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="font-medium">{downloadSuccessMsg}</span>
+          </div>
+          <button onClick={() => setDownloadSuccessMsg(null)} className="text-emerald-400 hover:text-white font-bold ml-2">
+            &times;
+          </button>
+        </div>
+      )}
+
+      {/* Offline Map Download Modal */}
+      {showOfflineModal && (
+        <div className="fixed inset-0 z-[2000] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0b1610] border border-[#204430] rounded-3xl max-w-md w-full p-6 text-white shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[#1b3425] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-emerald-950 border border-emerald-800 rounded-xl text-emerald-400">
+                  <Download className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-['Cinzel'] font-bold text-base text-white">Download Map Offline</h3>
+                  <p className="text-[11px] text-neutral-400">Stay navigatable even with zero cellular signal</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowOfflineModal(false)}
+                className="text-neutral-400 hover:text-white p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Option 1: Save to Browser Cache */}
+            <div className="p-4 rounded-2xl bg-[#070e0a] border border-[#173022] space-y-3">
+              <div className="flex items-start gap-3">
+                <HardDrive className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <div className="text-xs font-bold text-white flex items-center justify-between">
+                    <span>1. In-App Offline Navigation</span>
+                    {isOfflineCached && (
+                      <span className="text-[10px] text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">
+                        Cached
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-neutral-400 mt-1 leading-relaxed">
+                    Pre-caches all SGNP topographic map tiles directly into your browser storage so this live map continues tracking your location in deep forest dead zones.
+                  </p>
+                </div>
+              </div>
+
+              {isDownloadingTiles && tileDownloadProgress && (
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex justify-between text-[11px] text-neutral-300">
+                    <span className="flex items-center gap-1.5">
+                      <Loader2 className="w-3 h-3 text-emerald-400 animate-spin" />
+                      Downloading tiles...
+                    </span>
+                    <span className="font-mono text-emerald-400 font-bold">
+                      {tileDownloadProgress.downloaded} / {tileDownloadProgress.total}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-neutral-900 rounded-full overflow-hidden border border-[#204430]">
+                    <div 
+                      className="h-full bg-emerald-500 transition-all duration-150 rounded-full"
+                      style={{ width: `${Math.round((tileDownloadProgress.downloaded / tileDownloadProgress.total) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={handleDownloadBrowserTiles}
+                disabled={isDownloadingTiles}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow transition flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>{isOfflineCached ? 'Re-Download & Refresh In-App Tiles' : 'Save Map Tiles to Browser'}</span>
+              </button>
+            </div>
+
+            {/* Option 2: Download Standalone File to Device */}
+            <div className="p-4 rounded-2xl bg-[#070e0a] border border-[#173022] space-y-3">
+              <div className="flex items-start gap-3">
+                <FileDown className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <div className="text-xs font-bold text-white">
+                    2. Download Map File to Device (.html)
+                  </div>
+                  <p className="text-[11px] text-neutral-400 mt-1 leading-relaxed">
+                    Downloads a self-contained offline map file directly into your phone or PC downloads folder. Open it anytime in any browser without internet access. Includes all 12 attractions and emergency numbers.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleDownloadDeviceFile}
+                className="w-full py-2.5 bg-[#12241b] hover:bg-[#183124] text-emerald-300 border border-emerald-700/80 text-xs font-bold rounded-xl shadow transition flex items-center justify-center gap-2"
+              >
+                <FileDown className="w-4 h-4" />
+                <span>Download Standalone Map to Device</span>
+              </button>
+            </div>
+
+            <div className="text-[10px] text-neutral-500 text-center">
+              Works completely offline with device GPS hardware in cellular dead zones.
+            </div>
+          </div>
         </div>
       )}
 

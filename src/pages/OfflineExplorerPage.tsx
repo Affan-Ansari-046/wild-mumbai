@@ -11,7 +11,8 @@ import {
   Layers,
   Info,
   X,
-  Loader2
+  Loader2,
+  FileDown
 } from 'lucide-react';
 import {
   downloadCompleteOfflinePack,
@@ -24,11 +25,14 @@ import {
   getMapTilesCacheStatus,
   clearMapTilesCache,
   cancelDownload,
+  downloadOfflineMapFile,
   SGNP_BOUNDS,
   MIN_ZOOM,
   MAX_ZOOM
 } from '../services/tileDownloadService';
 import type { MapTilesCacheStatus, TileCountEstimate } from '../services/tileDownloadService';
+import { ATTRACTIONS_DATA } from '../data/attractions';
+import { EMERGENCY_CONTACTS_DATA } from '../data/emergencyContacts';
 
 export const OfflineExplorerPage: React.FC = () => {
   // Live network connection state
@@ -148,6 +152,13 @@ export const OfflineExplorerPage: React.FC = () => {
       setTileError(null);
       await refreshStatus();
     }
+  };
+
+  const handleDownloadStandaloneFile = () => {
+    const res = downloadOfflineMapFile(ATTRACTIONS_DATA, EMERGENCY_CONTACTS_DATA);
+    setTileSuccessMessage(
+      `Successfully exported "${res.filename}" (${Math.round(res.sizeBytes / 1024)} KB) to your device Downloads folder! Ready for offline field use.`
+    );
   };
 
   // Handle IndexedDB Data Pack Download

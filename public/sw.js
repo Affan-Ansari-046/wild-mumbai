@@ -40,18 +40,14 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.open(MAP_TILE_CACHE).then((tileCache) => {
         const canonicalUrl = `https://tile.openstreetmap.org${url.pathname}`;
-        return tileCache.match(event.request).then((tileResponse) => {
+        return tileCache.match(event.request, { ignoreSearch: true }).then((tileResponse) => {
           if (tileResponse) {
             return tileResponse;
           }
-          return tileCache.match(canonicalUrl).then((canonicalResponse) => {
-            if (canonicalResponse) {
-              return canonicalResponse;
-            }
 
           // Fall back to CACHE_NAME
           return caches.open(CACHE_NAME).then((appCache) => {
-            return appCache.match(event.request).then((appCacheResponse) => {
+            return appCache.match(event.request, { ignoreSearch: true }).then((appCacheResponse) => {
               if (appCacheResponse) {
                 return appCacheResponse;
               }
