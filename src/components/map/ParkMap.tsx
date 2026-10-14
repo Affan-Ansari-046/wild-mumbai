@@ -136,18 +136,18 @@ export const ParkMap: React.FC<ParkMapProps> = ({
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // High-performance OpenStreetMap-based CARTO Voyager basemap (authenticated with API key)
-    const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=cb1_4k81_1_b0a70455fc908ae029aab1be', {
-      subdomains: 'abcd',
+    // Clean, authentic OpenStreetMap tile layer (zero watermarks, zero 403 blocks)
+    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      subdomains: ['a', 'b', 'c'],
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO</a> | SGNP'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors | SGNP Boundary'
     });
 
     tileLayer.on('tileerror', () => {
-      // Fallback to standard OSM if CARTO fails
-      const fallbackLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        subdomains: ['a', 'b', 'c'],
-        maxZoom: 19
+      // Automatic fallback to ESRI World Topo Map if ever needed
+      const fallbackLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri &mdash; National Geographic, DeLorme, USGS, SGNP'
       });
       fallbackLayer.addTo(map);
     });

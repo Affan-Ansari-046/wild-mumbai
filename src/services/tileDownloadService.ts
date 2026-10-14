@@ -45,8 +45,7 @@ export const MIN_ZOOM = 12;
 export const MAX_ZOOM = 15;
 
 export const TILE_CACHE_NAME = 'wild-mumbai-map-tiles-v1';
-export const CARTO_API_KEY = 'cb1_4k81_1_b0a70455fc908ae029aab1be';
-export const TILE_URL_TEMPLATE = `https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?api_key=${CARTO_API_KEY}`;
+export const TILE_URL_TEMPLATE = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
 // State flags for cancellation & abort control
 let abortController: AbortController | null = null;
@@ -94,7 +93,7 @@ export function getAllTiles(
           z,
           x,
           y,
-          url: `https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png?api_key=${CARTO_API_KEY}`
+          url: `https://tile.openstreetmap.org/${z}/${x}/${y}.png`
         });
       }
     }
@@ -359,11 +358,11 @@ export function downloadOfflineMapFile(
       maxZoom: 18
     });
 
-    // Basemap: CARTO Voyager with API key
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=' + '${CARTO_API_KEY}', {
-      subdomains: 'abcd',
+    // Basemap: Clean OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      subdomains: ['a', 'b', 'c'],
       maxZoom: 19,
-      attribution: '&copy; CARTO &copy; OpenStreetMap'
+      attribution: '&copy; OpenStreetMap contributors | SGNP'
     }).addTo(map);
 
     // SGNP Sanctuary Boundary Polygon
