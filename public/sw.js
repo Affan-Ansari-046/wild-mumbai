@@ -35,8 +35,8 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // OSM tile requests: check MAP_TILE_CACHE -> fallback to CACHE_NAME -> network
-  if (url.hostname.includes('tile.openstreetmap.org')) {
+  // Map tile requests (CARTO & OSM): check MAP_TILE_CACHE -> fallback to CACHE_NAME -> network
+  if (url.hostname.includes('tile.openstreetmap.org') || url.hostname.includes('basemaps.cartocdn.com')) {
     event.respondWith(
       caches.open(MAP_TILE_CACHE).then((tileCache) => {
         const canonicalUrl = `https://tile.openstreetmap.org${url.pathname}`;

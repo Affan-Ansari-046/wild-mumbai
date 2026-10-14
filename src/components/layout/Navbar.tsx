@@ -144,7 +144,19 @@ export const Navbar: React.FC = () => {
               </Link>
             );
           })}
-          <div className="pt-2 border-t border-[#172c21]">
+          <div className="pt-2 border-t border-[#172c21] space-y-1">
+            <button
+              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-neutral-300 hover:bg-[#13271c] hover:text-white"
+            >
+              <div className="flex items-center gap-3">
+                {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-emerald-400" />}
+                <span>Theme Mode</span>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800">
+                {isDark ? 'Dark Forest' : 'Light Forest'}
+              </span>
+            </button>
             <Link
               to="/settings"
               onClick={() => setMobileMenuOpen(false)}
